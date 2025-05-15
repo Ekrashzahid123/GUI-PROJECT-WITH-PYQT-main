@@ -1,11 +1,9 @@
 import sys
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox,
-    QVBoxLayout, QHBoxLayout, QCheckBox, QListWidget, QInputDialog
-)
+import PyQt6.QtWidgets as QtWidgets
+from PyQt6.QtGui import QDoubleValidator
 from book_library import Book, EBook, Library, BookNotAvailableError
 
-class LibraryApp(QWidget):
+class LibraryApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.library = Library()
@@ -14,56 +12,53 @@ class LibraryApp(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
 
-        # Title
-        layout.addWidget(QLabel("Title:"))
-        self.title_input = QLineEdit()
+        layout.addWidget(QtWidgets.QLabel("Title:"))
+        self.title_input = QtWidgets.QLineEdit()
         layout.addWidget(self.title_input)
 
-        # Author
-        layout.addWidget(QLabel("Author:"))
-        self.author_input = QLineEdit()
+       
+        layout.addWidget(QtWidgets.QLabel("Author:"))
+        self.author_input = QtWidgets.QLineEdit()
         layout.addWidget(self.author_input)
-
-        # ISBN
-        layout.addWidget(QLabel("ISBN:"))
-        self.isbn_input = QLineEdit()
+       
+        layout.addWidget(QtWidgets.QLabel("ISBN:"))
+        self.isbn_input = QtWidgets.QLineEdit()
         layout.addWidget(self.isbn_input)
 
-        # eBook Checkbox
-        self.ebook_checkbox = QCheckBox("Is eBook?")
-        self.ebook_checkbox.stateChanged.connect(self.toggle_ebook_fields)
-        layout.addWidget(self.ebook_checkbox)
+        self.ebook_check = QtWidgets.QCheckBox("Is eBook?")
+        self.ebook_check.stateChanged.connect(self.toggle_ebook_fields)
+        layout.addWidget(self.ebook_check)
 
-        # Download Size
-        layout.addWidget(QLabel("Download Size (MB):"))
-        self.size_input = QLineEdit()
+   
+        layout.addWidget(QtWidgets.QLabel("Download Size (MB):"))
+        self.size_input = QtWidgets.QLineEdit()
         self.size_input.setEnabled(False)
+        self.size_input.setValidator(QDoubleValidator(0.0, 10000.0, 2))
         layout.addWidget(self.size_input)
 
-        # Buttons
+      
         layout.addWidget(self.create_button("Add Book", self.add_book))
         layout.addWidget(self.create_button("Lend Book", self.lend_book))
         layout.addWidget(self.create_button("Return Book", self.return_book))
         layout.addWidget(self.create_button("Remove Book", self.remove_book))
         layout.addWidget(self.create_button("View Books by Author", self.view_books_by_author))
 
-        # Inventory List
-        layout.addWidget(QLabel("Library Inventory:"))
-        self.book_list = QListWidget()
+        layout.addWidget(QtWidgets.QLabel("Library Inventory:"))
+        self.book_list = QtWidgets.QListWidget()
         layout.addWidget(self.book_list)
 
         self.setLayout(layout)
         self.update_book_list()
 
     def create_button(self, text, slot):
-        btn = QPushButton(text)
-        btn.clicked.connect(slot)
-        return btn
+        button1 = QtWidgets.QPushButton(text)
+        button1.clicked.connect(slot)
+        return button1
 
     def toggle_ebook_fields(self):
-        is_checked = self.ebook_checkbox.isChecked()
+        is_checked = self.ebook_check.isChecked()
         self.size_input.setEnabled(is_checked)
         if not is_checked:
             self.size_input.clear()
@@ -72,60 +67,60 @@ class LibraryApp(QWidget):
         title = self.title_input.text()
         author = self.author_input.text()
         isbn = self.isbn_input.text()
-        is_ebook = self.ebook_checkbox.isChecked()
+        is_ebook = self.ebook_check.isChecked()
         size = self.size_input.text()
 
         if not title or not author or not isbn:
-            QMessageBox.warning(self, "Error", "Title, Author, and ISBN are required.")
+            QtWidgets.QMessageBox.warning(self, "Error", "Title, Author, and ISBN are required.")
             return
 
         if is_ebook:
             if not size:
-                QMessageBox.warning(self, "Error", "Download size is required for eBooks.")
+                QtWidgets.QMessageBox.warning(self, "Error", "Download size is required for eBooks.")
                 return
             try:
                 size = float(size)
             except ValueError:
-                QMessageBox.warning(self, "Error", "Download size must be a number.")
+                QtWidgets.QMessageBox.warning(self, "Error", "Download size must be a number.")
                 return
             book = EBook(title, author, isbn, size)
         else:
             book = Book(title, author, isbn)
 
         self.library.add_book(book)
-        QMessageBox.information(self, "Success", f"Book '{title}' added to the library.")
+        QtWidgets.QMessageBox.information(self, "Success", f"Book '{title}' added to the library.")
         self.clear_inputs()
         self.update_book_list()
 
     def lend_book(self):
-        isbn, ok = QInputDialog.getText(self, "Lend Book", "Enter ISBN to lend:")
+        isbn, ok = QtWidgets.QInputDialog.getText(self, "Lend Book", "Enter ISBN to lend:")
         if ok and isbn:
             try:
                 self.library.lend_book(isbn)
-                QMessageBox.information(self, "Success", "Book lent successfully.")
+                QtWidgets.QMessageBox.information(self, "Success", "Book lent successfully.")
                 self.update_book_list()
-            except BookNotAvailableError as e:
-                QMessageBox.warning(self, "Error", str(e))
+            except BookNotAvailableError as error:
+                QtWidgets.QMessageBox.warning(self, "Error", str(error))
 
     def return_book(self):
-        isbn, ok = QInputDialog.getText(self, "Return Book", "Enter ISBN to return:")
+        isbn, ok = QtWidgets.QInputDialog.getText(self, "Return Book", "Enter ISBN to return:")
         if ok and isbn:
             try:
                 self.library.return_book(isbn)
-                QMessageBox.information(self, "Success", "Book returned successfully.")
+                QtWidgets.QMessageBox.information(self, "Success", "Book returned successfully.")
                 self.update_book_list()
             except BookNotAvailableError as e:
-                QMessageBox.warning(self, "Error", str(e))
+                QtWidgets.QMessageBox.warning(self, "Error", str(e))
 
     def remove_book(self):
-        isbn, ok = QInputDialog.getText(self, "Remove Book", "Enter ISBN to remove:")
+        isbn, ok = QtWidgets.QInputDialog.getText(self, "Remove Book", "Enter ISBN to remove:")
         if ok and isbn:
             self.library.remove_book(isbn)
-            QMessageBox.information(self, "Success", "Book removed successfully.")
+            QtWidgets.QMessageBox.information(self, "Success", "Book removed successfully.")
             self.update_book_list()
 
     def view_books_by_author(self):
-        author, ok = QInputDialog.getText(self, "Search by Author", "Enter author's name:")
+        author, ok = QtWidgets.QInputDialog.getText(self, "Search by Author", "Enter author's name:")
         if ok and author:
             books = list(self.library.books_by_author(author))
             self.book_list.clear()
@@ -134,7 +129,7 @@ class LibraryApp(QWidget):
                 for book in books:
                     self.book_list.addItem(str(book))
             else:
-                QMessageBox.information(self, "Not Found", "No books by this author.")
+                QtWidgets.QMessageBox.information(self, "Not Found", "No books by this author.")
 
     def update_book_list(self):
         self.book_list.clear()
@@ -151,7 +146,7 @@ class LibraryApp(QWidget):
         self.size_input.setEnabled(False)
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     win = LibraryApp()
     win.show()
     sys.exit(app.exec())
